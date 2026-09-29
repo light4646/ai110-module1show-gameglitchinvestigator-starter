@@ -1,0 +1,39 @@
+===== BEFORE style fixes =====
+# pycodestyle 2.15.0 — default PEP 8 settings (79-char lines)
+$ pycodestyle app.py logic_utils.py tests/ scripts/
+app.py:23:80: E501 line too long (80 > 79 characters)
+logic_utils.py:30:80: E501 line too long (81 > 79 characters)
+logic_utils.py:44:80: E501 line too long (81 > 79 characters)
+logic_utils.py:126:80: E501 line too long (81 > 79 characters)
+logic_utils.py:127:80: E501 line too long (86 > 79 characters)
+tests/test_app_flow.py:37:80: E501 line too long (80 > 79 characters)
+tests/test_game_logic.py:21:1: E302 expected 2 blank lines, found 1
+tests/test_game_logic.py:26:1: E302 expected 2 blank lines, found 1
+tests/test_game_logic.py:38:1: E302 expected 2 blank lines, found 1
+tests/test_game_logic.py:50:1: E302 expected 2 blank lines, found 1
+tests/test_game_logic.py:63:1: E302 expected 2 blank lines, found 1
+tests/test_game_logic.py:64:80: E501 line too long (80 > 79 characters)
+tests/test_game_logic.py:67:1: E302 expected 2 blank lines, found 1
+tests/test_game_logic.py:72:1: E302 expected 2 blank lines, found 1
+tests/test_game_logic.py:73:80: E501 line too long (87 > 79 characters)
+tests/test_game_logic.py:81:1: E302 expected 2 blank lines, found 1
+tests/test_game_logic.py:85:1: E302 expected 2 blank lines, found 1
+tests/test_game_logic.py:96:1: E302 expected 2 blank lines, found 1
+tests/test_game_logic.py:99:1: E302 expected 2 blank lines, found 1
+tests/test_game_logic.py:104:1: E302 expected 2 blank lines, found 1
+tests/test_game_logic.py:109:1: E302 expected 2 blank lines, found 1
+tests/test_game_logic.py:114:1: E302 expected 2 blank lines, found 1
+tests/test_game_logic.py:119:1: E302 expected 2 blank lines, found 1
+tests/test_game_logic.py:123:1: E302 expected 2 blank lines, found 1
+scripts/reproduce_bugs.py:1:80: E501 line too long (83 > 79 characters)
+scripts/reproduce_bugs.py:32:80: E501 line too long (81 > 79 characters)
+scripts/reproduce_bugs.py:92:80: E501 line too long (85 > 79 characters)
+scripts/reproduce_bugs.py:102:80: E501 line too long (113 > 79 characters)
+$ pydocstyle --convention=google logic_utils.py
+(no issues)
+
+===== AFTER style fixes =====
+$ pycodestyle app.py logic_utils.py tests/ scripts/
+(no issues)
+$ pydocstyle --convention=google logic_utils.py
+(no issues)

@@ -20,7 +20,7 @@ def start_new_game(difficulty: str) -> None:
     # the resets into one function that respects the difficulty range.
     low, high = get_range_for_difficulty(difficulty)
     st.session_state.secret = random.randint(low, high)
-    # FIX: attempts starts at 0 (was 1 on first load), so Normal really gives 8.
+    # FIX: attempts starts at 0 (was 1 on first load), so Normal gives all 8.
     st.session_state.attempts = 0
     st.session_state.score = 0
     st.session_state.status = "playing"

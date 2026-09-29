@@ -1,4 +1,4 @@
-"""Drive app.py headlessly with Streamlit's AppTest and print what the player sees.
+"""Run app.py headlessly with Streamlit AppTest; print what the player sees.
 
 Usage: python scripts/reproduce_bugs.py > bug_trace_before.txt
 The secret is pinned through session_state so every run is reproducible.
@@ -29,7 +29,8 @@ def screen(at):
             lines.append(f"    [{kind}] {el.value}")
     lines.append(
         f"    state: attempts={at.session_state['attempts']} "
-        f"score={at.session_state['score']} status={at.session_state['status']} "
+        f"score={at.session_state['score']} "
+        f"status={at.session_state['status']} "
         f"secret={at.session_state['secret']}"
     )
     return "\n".join(lines)
@@ -89,7 +90,7 @@ button(at, "New Game")
 print("  after clicking New Game:")
 print(screen(at))
 
-scenario("E. Difficulty ranges are wrong and switching keeps an out-of-range secret")
+scenario("E. Wrong difficulty ranges; switching keeps an out-of-range secret")
 at = new_app(80)
 at.selectbox[0].select("Easy")
 at.run()
@@ -99,7 +100,8 @@ print(screen(at))
 at = new_app(3, difficulty="Hard")
 print("  Hard sidebar says:", [c.value for c in at.sidebar.caption])
 button(at, "New Game")
-print("  Hard -> New Game, new secret:", at.session_state["secret"], "(should be inside the Hard sidebar range)")
+print("  Hard -> New Game, new secret:", at.session_state["secret"],
+      "(should be inside the Hard sidebar range)")
 
 scenario("F. Score rewards some wrong guesses (secret=50)")
 at = new_app(50)

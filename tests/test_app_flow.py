@@ -34,7 +34,8 @@ def info_text(at):
 
 def test_fresh_game_shows_full_attempts_and_correct_range():
     at = start()
-    assert info_text(at) == "Guess a number between 1 and 100. Attempts left: 8"
+    expected = "Guess a number between 1 and 100. Attempts left: 8"
+    assert info_text(at) == expected
 
 
 def test_attempts_left_updates_on_the_same_turn():

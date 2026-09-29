@@ -11,10 +11,19 @@ DIFFICULTY_SETTINGS = {
     "Hard": {"range": (1, 200), "attempts": 5},
 }
 
+DEFAULT_DIFFICULTY = "Normal"
+
 WRONG_GUESS_PENALTY = 5
 MAX_WIN_POINTS = 100
 MIN_WIN_POINTS = 10
-POINTS_LOST_PER_EXTRA_ATTEMPT = 10
+POINTS_PER_EXTRA_ATTEMPT = 10
+
+
+def _settings_for(difficulty: str) -> dict:
+    """Return the settings for a difficulty, falling back to Normal."""
+    return DIFFICULTY_SETTINGS.get(
+        difficulty, DIFFICULTY_SETTINGS[DEFAULT_DIFFICULTY]
+    )
 
 
 def get_range_for_difficulty(difficulty: str) -> tuple[int, int]:
@@ -27,8 +36,7 @@ def get_range_for_difficulty(difficulty: str) -> tuple[int, int]:
     Returns:
         A ``(low, high)`` tuple where ``low <= secret <= high``.
     """
-    settings = DIFFICULTY_SETTINGS.get(difficulty, DIFFICULTY_SETTINGS["Normal"])
-    return settings["range"]
+    return _settings_for(difficulty)["range"]
 
 
 def get_attempt_limit(difficulty: str) -> int:
@@ -41,8 +49,7 @@ def get_attempt_limit(difficulty: str) -> int:
     Returns:
         The maximum number of valid guesses allowed in one game.
     """
-    settings = DIFFICULTY_SETTINGS.get(difficulty, DIFFICULTY_SETTINGS["Normal"])
-    return settings["attempts"]
+    return _settings_for(difficulty)["attempts"]
 
 
 def parse_guess(raw, low: int | None = None, high: int | None = None):
@@ -111,7 +118,7 @@ def update_score(current_score: int, outcome: str, attempt_number: int) -> int:
     """Return the new score after a guess.
 
     A win is worth ``MAX_WIN_POINTS`` on the first guess and
-    ``POINTS_LOST_PER_EXTRA_ATTEMPT`` fewer for each later guess, never less
+    ``POINTS_PER_EXTRA_ATTEMPT`` fewer for each later guess, never less
     than ``MIN_WIN_POINTS``. Every wrong guess costs ``WRONG_GUESS_PENALTY``.
 
     Args:
@@ -123,8 +130,9 @@ def update_score(current_score: int, outcome: str, attempt_number: int) -> int:
         The updated score. Unknown outcomes leave the score unchanged.
     """
     if outcome == "Win":
-        # FIX: was 100 - 10 * (attempt_number + 1), so a first-try win scored 70.
-        points = MAX_WIN_POINTS - POINTS_LOST_PER_EXTRA_ATTEMPT * (attempt_number - 1)
+        # FIX: was 100 - 10 * (attempt_number + 1): a first-try win scored 70.
+        extra_attempts = attempt_number - 1
+        points = MAX_WIN_POINTS - POINTS_PER_EXTRA_ATTEMPT * extra_attempts
         return current_score + max(points, MIN_WIN_POINTS)
 
     # FIX: "Too High" used to ADD 5 points on even attempts.

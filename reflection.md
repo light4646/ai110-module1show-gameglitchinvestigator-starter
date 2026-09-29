@@ -75,6 +75,10 @@ AI (Claude) designed most of the tests. The idea I found most useful was testing
 
 - How would you explain Streamlit "reruns" and session state to a friend who has never used Streamlit?
 
+A Streamlit app is a Python script that runs **top to bottom again every time you interact with it**: click a button, type in a box, change a dropdown. That's a "rerun". Normal variables are rebuilt from scratch each time, so `secret = random.randint(1, 100)` at the top would pick a new number on every click. `st.session_state` is a dictionary that survives reruns, so the game keeps its memory there (`secret`, `attempts`, `score`, `status`, `history`) and only sets each value once with `if "secret" not in st.session_state`.
+
+This project taught me two gotchas. First, **order matters**: a rerun draws the page in script order, so the "Attempts left" box drawn *above* the Submit logic showed last turn's number. The fix was to reserve its spot with `st.empty()` and fill it in at the end. Second, **state you forget to reset stays around forever**: New Game reset `attempts` and `secret` but not `status`, so `status` stayed `"won"` across reruns and the game was stuck. Putting every reset in one `start_new_game()` function made that much harder to get wrong.
+
 ---
 
 ## 5. Looking ahead: your developer habits
@@ -83,3 +87,9 @@ AI (Claude) designed most of the tests. The idea I found most useful was testing
   - This could be a testing habit, a prompting strategy, or a way you used Git.
 - What is one thing you would do differently next time you work with AI on a coding task?
 - In one or two sentences, describe how this project changed the way you think about AI generated code.
+
+**Habit to keep:** run new tests against the *old, broken* code, not just the fixed code. A test that passes on buggy code isn't testing anything. One of the tests in this project passed on the broken version only because two bugs cancelled each other out, and I would never have noticed without that check. I also want to keep making a small commit after each phase (bugs logged → fixes + tests → docs), so the history tells the story.
+
+**Next time:** I'd check the AI's claims against the running program earlier. The README said the secret "changes every time you click Submit", but the debug panel showed it didn't. If I had trusted that hint I'd have spent time "fixing" session state that already worked, while the real bug was in New Game. I'd also give the AI one bug at a time, so it's easier to review each change.
+
+**How it changed my thinking:** AI-generated code can look finished and still be wrong in ways that only show up when you actually play it, like hints that point the wrong way, or two bugs that hide each other. That goes for AI-written tests and docs too. Now I treat AI output as a draft I have to verify with real inputs and tests before I trust it.

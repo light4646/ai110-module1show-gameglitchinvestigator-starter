@@ -1,0 +1,59 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0 -- /Users/nour/Desktop/Fall 2026/Codepath_AI110/PROJone/ai110-module1show-gameglitchinvestigator-starter/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/nour/Desktop/Fall 2026/Codepath_AI110/PROJone/ai110-module1show-gameglitchinvestigator-starter
+configfile: pytest.ini
+testpaths: tests
+plugins: anyio-4.15.1
+collecting ... collected 48 items
+
+tests/test_app_flow.py::test_fresh_game_shows_full_attempts_and_correct_range PASSED [  2%]
+tests/test_app_flow.py::test_attempts_left_updates_on_the_same_turn PASSED [  4%]
+tests/test_app_flow.py::test_hint_direction_in_the_live_app PASSED       [  6%]
+tests/test_app_flow.py::test_even_attempt_uses_numeric_comparison PASSED [  8%]
+tests/test_app_flow.py::test_player_gets_every_allowed_guess PASSED      [ 10%]
+tests/test_app_flow.py::test_new_game_after_win_really_restarts PASSED   [ 12%]
+tests/test_app_flow.py::test_new_game_secret_respects_difficulty PASSED  [ 14%]
+tests/test_app_flow.py::test_switching_difficulty_resets_secret_into_new_range PASSED [ 16%]
+tests/test_app_flow.py::test_invalid_input_does_not_use_an_attempt PASSED [ 18%]
+tests/test_game_logic.py::test_winning_guess PASSED                      [ 20%]
+tests/test_game_logic.py::test_guess_too_high PASSED                     [ 22%]
+tests/test_game_logic.py::test_guess_too_low PASSED                      [ 25%]
+tests/test_game_logic.py::test_too_high_guess_tells_player_to_go_lower PASSED [ 27%]
+tests/test_game_logic.py::test_too_low_guess_tells_player_to_go_higher PASSED [ 29%]
+tests/test_game_logic.py::test_single_digit_guess_is_compared_numerically PASSED [ 31%]
+tests/test_game_logic.py::test_large_guess_is_compared_numerically PASSED [ 33%]
+tests/test_game_logic.py::test_hard_range_is_wider_than_normal PASSED    [ 35%]
+tests/test_game_logic.py::test_difficulty_gets_harder_in_order PASSED    [ 37%]
+tests/test_game_logic.py::test_attempt_limits_match_sidebar PASSED       [ 39%]
+tests/test_game_logic.py::test_unknown_difficulty_falls_back_to_normal PASSED [ 41%]
+tests/test_game_logic.py::test_first_try_win_gets_full_points PASSED     [ 43%]
+tests/test_game_logic.py::test_win_points_drop_each_attempt_but_never_below_minimum PASSED [ 45%]
+tests/test_game_logic.py::test_wrong_guess_always_costs_points[Too High-1] PASSED [ 47%]
+tests/test_game_logic.py::test_wrong_guess_always_costs_points[Too High-2] PASSED [ 50%]
+tests/test_game_logic.py::test_wrong_guess_always_costs_points[Too High-3] PASSED [ 52%]
+tests/test_game_logic.py::test_wrong_guess_always_costs_points[Too High-4] PASSED [ 54%]
+tests/test_game_logic.py::test_wrong_guess_always_costs_points[Too Low-1] PASSED [ 56%]
+tests/test_game_logic.py::test_wrong_guess_always_costs_points[Too Low-2] PASSED [ 58%]
+tests/test_game_logic.py::test_wrong_guess_always_costs_points[Too Low-3] PASSED [ 60%]
+tests/test_game_logic.py::test_wrong_guess_always_costs_points[Too Low-4] PASSED [ 62%]
+tests/test_game_logic.py::test_valid_guess_parses PASSED                 [ 64%]
+tests/test_game_logic.py::test_surrounding_whitespace_is_ignored PASSED  [ 66%]
+tests/test_game_logic.py::test_empty_input_is_rejected[None] PASSED      [ 68%]
+tests/test_game_logic.py::test_empty_input_is_rejected[] PASSED          [ 70%]
+tests/test_game_logic.py::test_empty_input_is_rejected[   ] PASSED       [ 72%]
+tests/test_game_logic.py::test_non_numeric_input_is_rejected[abc] PASSED [ 75%]
+tests/test_game_logic.py::test_non_numeric_input_is_rejected[4O] PASSED  [ 77%]
+tests/test_game_logic.py::test_non_numeric_input_is_rejected[fifty] PASSED [ 79%]
+tests/test_game_logic.py::test_non_numeric_input_is_rejected[1e2x] PASSED [ 81%]
+tests/test_game_logic.py::test_decimal_input_is_rejected_not_truncated[49.9] PASSED [ 83%]
+tests/test_game_logic.py::test_decimal_input_is_rejected_not_truncated[3.0] PASSED [ 85%]
+tests/test_game_logic.py::test_decimal_input_is_rejected_not_truncated[-0.5] PASSED [ 87%]
+tests/test_game_logic.py::test_out_of_range_input_is_rejected[-5] PASSED [ 89%]
+tests/test_game_logic.py::test_out_of_range_input_is_rejected[0] PASSED  [ 91%]
+tests/test_game_logic.py::test_out_of_range_input_is_rejected[101] PASSED [ 93%]
+tests/test_game_logic.py::test_out_of_range_input_is_rejected[99999999999999999999] PASSED [ 95%]
+tests/test_game_logic.py::test_range_bounds_are_inclusive PASSED         [ 97%]
+tests/test_game_logic.py::test_no_range_check_when_bounds_not_given PASSED [100%]
+
+============================== 48 passed in 0.79s ==============================

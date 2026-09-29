@@ -1,5 +1,5 @@
 # Bug trace AFTER fixes — same scenarios as bug_trace_before.txt
-# generated with: python scripts/reproduce_bugs.py > bug_trace_after.txt (2026-09-29 17:26)
+# generated with: python scripts/reproduce_bugs.py > bug_trace_after.txt (2026-09-29 17:28)
 
 === A. Hints point the wrong way (secret=50, Normal) ===
   start:
@@ -42,15 +42,15 @@
   after clicking New Game:
     [info] Guess a number between 1 and 100. Attempts left: 8
     [success] New game started.
-    state: attempts=0 score=0 status=playing secret=90
+    state: attempts=0 score=0 status=playing secret=99
 
-=== E. Difficulty ranges are wrong and switching keeps an out-of-range secret ===
+=== E. Wrong difficulty ranges; switching keeps an out-of-range secret ===
   Normal game (secret=80), then switch to Easy:
   Easy sidebar says: ['Range: 1 to 20', 'Attempts allowed: 6']
     [info] Guess a number between 1 and 20. Attempts left: 6
-    state: attempts=0 score=0 status=playing secret=5
+    state: attempts=0 score=0 status=playing secret=4
   Hard sidebar says: ['Range: 1 to 200', 'Attempts allowed: 5']
-  Hard -> New Game, new secret: 15 (should be inside the Hard sidebar range)
+  Hard -> New Game, new secret: 95 (should be inside the Hard sidebar range)
 
 === F. Score rewards some wrong guesses (secret=50) ===
   guess 70 (Too High, attempt #2):
