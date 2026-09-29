@@ -1,0 +1,70 @@
+# Bug trace AFTER fixes — same scenarios as bug_trace_before.txt
+# generated with: python scripts/reproduce_bugs.py > bug_trace_after.txt (2026-09-29 17:26)
+
+=== A. Hints point the wrong way (secret=50, Normal) ===
+  start:
+    [info] Guess a number between 1 and 100. Attempts left: 8
+    state: attempts=0 score=0 status=playing secret=50
+  guess 60:
+    [info] Guess a number between 1 and 100. Attempts left: 7
+    [warning] Go LOWER!
+    state: attempts=1 score=-5 status=playing secret=50
+
+=== B. Even-numbered attempts compare against a string (secret=50) ===
+  guess 40 (attempt #2 internally):
+    [info] Guess a number between 1 and 100. Attempts left: 7
+    [warning] Go HIGHER!
+    state: attempts=1 score=-5 status=playing secret=50
+  guess 9 (attempt #3):
+    [info] Guess a number between 1 and 100. Attempts left: 6
+    [warning] Go HIGHER!
+    state: attempts=2 score=-10 status=playing secret=50
+  guess 9 again (attempt #4):
+    [info] Guess a number between 1 and 100. Attempts left: 5
+    [warning] Go HIGHER!
+    state: attempts=3 score=-15 status=playing secret=50
+
+=== C. Attempt counter starts at 1 (Normal allows 8) ===
+  before any guess:
+    [info] Guess a number between 1 and 100. Attempts left: 8
+    state: attempts=0 score=0 status=playing secret=50
+  after 7 wrong guesses:
+    [info] Guess a number between 1 and 100. Attempts left: 1
+    [warning] Go HIGHER!
+    state: attempts=7 score=-35 status=playing secret=50
+
+=== D. New Game after a win does not restart the game ===
+  after winning guess 50:
+    [info] Guess a number between 1 and 100. Attempts left: 7
+    [warning] Correct!
+    [success] You won! The secret was 50. Final score: 100
+    state: attempts=1 score=100 status=won secret=50
+  after clicking New Game:
+    [info] Guess a number between 1 and 100. Attempts left: 8
+    [success] New game started.
+    state: attempts=0 score=0 status=playing secret=90
+
+=== E. Difficulty ranges are wrong and switching keeps an out-of-range secret ===
+  Normal game (secret=80), then switch to Easy:
+  Easy sidebar says: ['Range: 1 to 20', 'Attempts allowed: 6']
+    [info] Guess a number between 1 and 20. Attempts left: 6
+    state: attempts=0 score=0 status=playing secret=5
+  Hard sidebar says: ['Range: 1 to 200', 'Attempts allowed: 5']
+  Hard -> New Game, new secret: 15 (should be inside the Hard sidebar range)
+
+=== F. Score rewards some wrong guesses (secret=50) ===
+  guess 70 (Too High, attempt #2):
+    [info] Guess a number between 1 and 100. Attempts left: 7
+    [warning] Go LOWER!
+    state: attempts=1 score=-5 status=playing secret=50
+
+=== G. Invalid input still burns an attempt; decimals are truncated ===
+  guess 'abc':
+    [info] Guess a number between 1 and 100. Attempts left: 8
+    [error] That is not a number.
+    state: attempts=0 score=0 status=playing secret=50
+  guess '49.9':
+    [info] Guess a number between 1 and 100. Attempts left: 8
+    [error] Please enter a whole number (no decimals).
+    state: attempts=0 score=0 status=playing secret=50
+    history: []

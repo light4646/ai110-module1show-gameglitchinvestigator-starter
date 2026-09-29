@@ -3,7 +3,13 @@
 Usage: python scripts/reproduce_bugs.py > bug_trace_before.txt
 The secret is pinned through session_state so every run is reproducible.
 """
+import sys
+from pathlib import Path
+
 from streamlit.testing.v1 import AppTest
+
+# Let app.py import logic_utils when this script is run from the repo root
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
 def new_app(secret, difficulty="Normal"):
@@ -93,7 +99,7 @@ print(screen(at))
 at = new_app(3, difficulty="Hard")
 print("  Hard sidebar says:", [c.value for c in at.sidebar.caption])
 button(at, "New Game")
-print("  Hard -> New Game, new secret:", at.session_state["secret"], "(range should be 1-50)")
+print("  Hard -> New Game, new secret:", at.session_state["secret"], "(should be inside the Hard sidebar range)")
 
 scenario("F. Score rewards some wrong guesses (secret=50)")
 at = new_app(50)

@@ -43,6 +43,15 @@ To make each bug reproducible, I pinned the secret with `st.session_state` and d
 - Give one example of an AI suggestion that was correct (including what the AI suggested and how you verified the result).
 - Give one example of an AI suggestion you did not accept as written (including what the AI suggested, why you rejected or changed it, and how you verified your version). It does not have to be a suggestion that was wrong: over-engineered, out of scope, harder to read, or a poor fit for this codebase all count.
 
+**Tools:** Claude Code (Claude Opus 5.5) in agent mode, in the Claude desktop app. It read the repo, ran the app headlessly with Streamlit's `AppTest`, played it in a browser, edited `app.py` / `logic_utils.py`, and wrote the pytest tests. The starter code itself was also AI-generated, so part of the job was deciding which AI-written code and docs to trust.
+
+**AI explanation that was correct: the "every other guess" bug.** I asked why 9 vs a secret of 50 said "Too Low" on one guess and "Too High" on the next. Claude traced it to two places. `app.py` does `secret = str(st.session_state.secret)` whenever `attempts` is even. Then `guess > secret` raises `TypeError` (`int > str`), and `check_guess` catches it and compares `str(guess) > secret`. Strings compare character by character, so `"9" > "50"` is `True`. Claude suggested deleting both the `str()` conversion and the `except TypeError` fallback, so the comparison is always int vs int. I verified it three ways: `test_single_digit_guess_is_compared_numerically` (9 vs 50 → Too Low) and `test_large_guess_is_compared_numerically` (100 vs 50 → Too High) pass; `test_even_attempt_uses_numeric_comparison` in `tests/test_app_flow.py` fails on the original `app.py` and passes on the fixed one; and scenario B in `bug_trace_after.txt` now says "Go HIGHER!" for 9 on every attempt.
+
+**AI suggestions I did not accept as written:**
+- **The starter tests.** The AI-written `tests/test_game_logic.py` asserted `check_guess(60, 50) == "Too High"`, but `check_guess` returns a tuple `(outcome, message)`, so those tests could never pass, even with correct code. I didn't change `check_guess` to return a bare string, because `app.py` needs the message too. I changed the tests to unpack the tuple (`outcome, _ = check_guess(60, 50)`). I verified by running `pytest`: all three starter tests pass now.
+- **One of the AI's own tests.** Claude's first version of `test_attempts_left_updates_on_the_same_turn` only checked that the box said "Attempts left: 7" after one guess. When we ran the new tests against the *original* `app.py` to prove they catch the bugs, that one still passed, because two bugs cancel out: the counter starts at 1, and the info box lags one turn. A test that passes on broken code proves nothing, so it was rewritten to compare the box against the real `attempts` counter. Re-running against the original code: 9 of 9 app-flow tests fail, and all pass on the fixed code.
+- **The README hint.** The AI-written README says the secret "changes every time you click Submit" and suggests asking how to stop a variable from resetting. That didn't match what happened: in the debug panel the secret stayed 47 across guesses, because it's already stored in `st.session_state`. The real state bugs were in New Game (not resetting `status`, `score` and `history`) and in the attempt counter, so that's what we fixed instead of adding more session-state guards.
+
 ---
 
 ## 3. Debugging and testing your fixes
@@ -51,6 +60,14 @@ To make each bug reproducible, I pinned the secret with `st.session_state` and d
 - Describe at least one test you ran (manual or using pytest)  
   and what it showed you about your code.
 - Did AI help you design or understand any tests? How?
+
+A bug only counted as fixed when three things were true: a test that targets it passes, the same test **fails on the original code**, and the game behaves correctly when played. The middle check caught a weak test (see section 2). To run it, we copied the original `app.py` from the first commit into a temp folder next to the new tests. All 9 app-flow tests failed there, and all pass on the fixed code.
+
+The tests are in two files. `tests/test_game_logic.py` has unit tests for `logic_utils.py`: the starter tests, hint direction, numeric comparison, difficulty ranges, scoring, and input edge cases (empty, whitespace, non-numeric, decimals, negatives, out of range, a 20-digit number). `tests/test_app_flow.py` uses Streamlit's `AppTest` to drive `app.py` headlessly for the state bugs that don't live in pure functions: New Game after a win, attempts left, switching difficulty, and invalid input not using a turn. For example, `test_new_game_after_win_really_restarts` wins with 50, clicks New Game and checks that `status`, `score`, `attempts` and `history` are all reset. On the original code it failed with `status == "won"`, which is exactly the "You already won" bug.
+
+For the manual check, I played the fixed game in the browser with the debug panel open (secret 55). 80 gave "📉 Go LOWER!", 40 gave "📈 Go HIGHER!", and 55 gave "🎉 Correct!" with a final score of 70 (−5, −5, then +80 for a win on the 3rd guess). New Game then reset everything to 8 attempts and score 0. `bug_trace_after.txt` reruns the exact scenarios from `bug_trace_before.txt`, so the two files can be compared side by side.
+
+AI (Claude) designed most of the tests. The idea I found most useful was testing the *symptom* I had seen in the game (9 vs 50 flipping between guesses), rather than just the function's happy path.
 
 ---
 
