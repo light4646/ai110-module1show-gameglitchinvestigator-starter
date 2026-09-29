@@ -1,0 +1,71 @@
+# Bug trace BEFORE fixes — generated with: python scripts/reproduce_bugs.py > bug_trace_before.txt
+# Streamlit 1.60.0, run 2026-09-29 17:22
+
+=== A. Hints point the wrong way (secret=50, Normal) ===
+  start:
+    [info] Guess a number between 1 and 100. Attempts left: 7
+    state: attempts=1 score=0 status=playing secret=50
+  guess 60:
+    [info] Guess a number between 1 and 100. Attempts left: 7
+    [warning] Go HIGHER!
+    state: attempts=2 score=5 status=playing secret=50
+
+=== B. Even-numbered attempts compare against a string (secret=50) ===
+  guess 40 (attempt #2 internally):
+    [info] Guess a number between 1 and 100. Attempts left: 7
+    [warning] Go LOWER!
+    state: attempts=2 score=-5 status=playing secret=50
+  guess 9 (attempt #3):
+    [info] Guess a number between 1 and 100. Attempts left: 6
+    [warning] Go LOWER!
+    state: attempts=3 score=-10 status=playing secret=50
+  guess 9 again (attempt #4):
+    [info] Guess a number between 1 and 100. Attempts left: 5
+    [warning] Go HIGHER!
+    state: attempts=4 score=-5 status=playing secret=50
+
+=== C. Attempt counter starts at 1 (Normal allows 8) ===
+  before any guess:
+    [info] Guess a number between 1 and 100. Attempts left: 7
+    state: attempts=1 score=0 status=playing secret=50
+  after 7 wrong guesses:
+    [info] Guess a number between 1 and 100. Attempts left: 1
+    [warning] Go LOWER!
+    [error] Out of attempts! The secret was 50. Score: -35
+    state: attempts=8 score=-35 status=lost secret=50
+
+=== D. New Game after a win does not restart the game ===
+  after winning guess 50:
+    [info] Guess a number between 1 and 100. Attempts left: 7
+    [warning] Correct!
+    [success] You won! The secret was 50. Final score: 70
+    state: attempts=2 score=70 status=won secret=50
+  after clicking New Game:
+    [info] Guess a number between 1 and 100. Attempts left: 8
+    [success] You already won. Start a new game to play again.
+    state: attempts=0 score=70 status=won secret=3
+
+=== E. Difficulty ranges are wrong and switching keeps an out-of-range secret ===
+  Normal game (secret=80), then switch to Easy:
+  Easy sidebar says: ['Range: 1 to 20', 'Attempts allowed: 6']
+    [info] Guess a number between 1 and 100. Attempts left: 5
+    state: attempts=1 score=0 status=playing secret=80
+  Hard sidebar says: ['Range: 1 to 50', 'Attempts allowed: 5']
+  Hard -> New Game, new secret: 8 (range should be 1-50)
+
+=== F. Score rewards some wrong guesses (secret=50) ===
+  guess 70 (Too High, attempt #2):
+    [info] Guess a number between 1 and 100. Attempts left: 7
+    [warning] Go HIGHER!
+    state: attempts=2 score=5 status=playing secret=50
+
+=== G. Invalid input still burns an attempt; decimals are truncated ===
+  guess 'abc':
+    [info] Guess a number between 1 and 100. Attempts left: 7
+    [error] That is not a number.
+    state: attempts=2 score=0 status=playing secret=50
+  guess '49.9':
+    [info] Guess a number between 1 and 100. Attempts left: 6
+    [warning] Go LOWER!
+    state: attempts=3 score=-5 status=playing secret=50
+    history: ['abc', 49]
