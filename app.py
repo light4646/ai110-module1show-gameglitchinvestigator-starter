@@ -5,10 +5,12 @@ import streamlit as st
 # FIX: game logic refactored from app.py into logic_utils.py using Claude Code
 # (agent mode) so it can be unit tested without Streamlit.
 from logic_utils import (
+    build_round_record,
     check_guess,
     get_attempt_limit,
     get_range_for_difficulty,
     parse_guess,
+    summarize_rounds,
     update_score,
 )
 
@@ -25,7 +27,44 @@ def start_new_game(difficulty: str) -> None:
     st.session_state.score = 0
     st.session_state.status = "playing"
     st.session_state.history = []
+    # Challenge 2/4: one record per valid guess, for the sidebar and summary.
+    st.session_state.rounds = []
     st.session_state.difficulty = difficulty
+
+
+def show_hot_cold(record: dict) -> None:
+    """Challenge 4: show a color-coded Hot/Cold line for the last guess."""
+    st.markdown(
+        f"### :{record['color']}[{record['emoji']} {record['temperature']}!]"
+    )
+
+
+def show_guess_history(rounds: list, reveal_closeness: bool) -> None:
+    """Challenge 2: sidebar list of past guesses and how close each was."""
+    st.sidebar.divider()
+    st.sidebar.subheader("📜 Guess History")
+    if not rounds:
+        st.sidebar.caption("No guesses yet.")
+        return
+    for number, r in enumerate(rounds, start=1):
+        if reveal_closeness:
+            st.sidebar.markdown(
+                f"**#{number}: {r['guess']}** :{r['color']}[{r['emoji']} "
+                f"{r['temperature']}]"
+            )
+            st.sidebar.progress(
+                r["closeness"], text=f"{r['closeness']:.0%} close"
+            )
+        else:
+            st.sidebar.markdown(f"**#{number}: {r['guess']}**")
+    if not reveal_closeness:
+        st.sidebar.caption("Turn on 'Show hint' to see how close you were.")
+
+
+def show_summary(rounds: list) -> None:
+    """Challenge 4: end-of-game table of every guess in the session."""
+    st.subheader("📊 Game Summary")
+    st.table(summarize_rounds(rounds))
 
 
 st.set_page_config(page_title="Glitchy Guesser", page_icon="🎮")
@@ -51,6 +90,7 @@ st.sidebar.caption(f"Attempts allowed: {attempt_limit}")
 # inside the current range (it used to keep e.g. 80 on Easy's 1-20).
 if st.session_state.get("difficulty") != difficulty:
     start_new_game(difficulty)
+st.session_state.setdefault("rounds", [])
 
 st.subheader("Make a guess")
 
@@ -91,14 +131,21 @@ if st.session_state.status == "playing" and submit:
         # a string on even attempts, which made comparisons alphabetical.
         outcome, message = check_guess(guess_int, st.session_state.secret)
 
-        if show_hint:
-            st.warning(message)
-
         st.session_state.score = update_score(
             current_score=st.session_state.score,
             outcome=outcome,
             attempt_number=st.session_state.attempts,
         )
+        record = build_round_record(
+            guess_int, st.session_state.secret, outcome,
+            st.session_state.score, low, high,
+        )
+        st.session_state.rounds.append(record)
+
+        if show_hint:
+            st.warning(message)
+            if outcome != "Win":
+                show_hot_cold(record)
 
         if outcome == "Win":
             st.balloons()
@@ -118,6 +165,11 @@ elif st.session_state.status == "won":
     st.success("You already won. Start a new game to play again.")
 elif st.session_state.status == "lost":
     st.error("Game over. Start a new game to try again.")
+
+if st.session_state.status != "playing" and st.session_state.rounds:
+    show_summary(st.session_state.rounds)
+
+show_guess_history(st.session_state.rounds, reveal_closeness=show_hint)
 
 # FIX: range comes from the difficulty instead of a hard-coded "1 and 100".
 status_box.info(

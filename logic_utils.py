@@ -18,6 +18,15 @@ MAX_WIN_POINTS = 100
 MIN_WIN_POINTS = 10
 POINTS_PER_EXTRA_ATTEMPT = 10
 
+# Hot/Cold bands: (max distance as a fraction of the range, label, emoji,
+# Streamlit markdown color). Checked in order; the first match wins.
+TEMPERATURE_BANDS = (
+    (0.05, "Hot", "🔥", "red"),
+    (0.15, "Warm", "♨️", "orange"),
+    (0.30, "Cool", "🌬️", "blue"),
+    (1.00, "Cold", "🧊", "violet"),
+)
+
 
 def _settings_for(difficulty: str) -> dict:
     """Return the settings for a difficulty, falling back to Normal."""
@@ -140,3 +149,101 @@ def update_score(current_score: int, outcome: str, attempt_number: int) -> int:
         return current_score - WRONG_GUESS_PENALTY
 
     return current_score
+
+
+def get_closeness(guess: int, secret: int, low: int, high: int) -> float:
+    """Return how close a guess is to the secret, from 0.0 to 1.0.
+
+    ``1.0`` means the guess is the secret; ``0.0`` means it is as far away
+    as the range allows.
+
+    Args:
+        guess: The player's guess.
+        secret: The secret number.
+        low: Smallest number in the range.
+        high: Largest number in the range.
+
+    Returns:
+        ``1 - distance / (high - low)``, clamped to ``[0.0, 1.0]``.
+    """
+    span = max(high - low, 1)
+    closeness = 1 - abs(guess - secret) / span
+    return max(0.0, min(1.0, closeness))
+
+
+def get_temperature(guess: int, secret: int, low: int, high: int):
+    """Describe a guess as Hot, Warm, Cool or Cold.
+
+    The band depends on the distance as a share of the whole range, so
+    "Hot" means the same thing on Easy (1-20) and Hard (1-200).
+
+    Args:
+        guess: The player's guess.
+        secret: The secret number.
+        low: Smallest number in the range.
+        high: Largest number in the range.
+
+    Returns:
+        A tuple ``(label, emoji, color)`` such as ``("Hot", "🔥", "red")``.
+        A correct guess returns ``("Correct", "🎯", "green")``.
+    """
+    if guess == secret:
+        return "Correct", "🎯", "green"
+    distance_share = 1 - get_closeness(guess, secret, low, high)
+    for max_share, label, emoji, color in TEMPERATURE_BANDS:
+        if distance_share <= max_share:
+            return label, emoji, color
+    _, label, emoji, color = TEMPERATURE_BANDS[-1]
+    return label, emoji, color
+
+
+def build_round_record(
+    guess: int, secret: int, outcome: str, score: int, low: int, high: int
+) -> dict:
+    """Bundle everything the UI needs to show about one guess.
+
+    Args:
+        guess: The player's guess.
+        secret: The secret number.
+        outcome: ``"Win"``, ``"Too High"`` or ``"Too Low"``.
+        score: The score after this guess.
+        low: Smallest number in the range.
+        high: Largest number in the range.
+
+    Returns:
+        A dict with ``guess``, ``outcome``, ``distance``, ``closeness``,
+        ``temperature``, ``emoji``, ``color`` and ``score`` keys.
+    """
+    label, emoji, color = get_temperature(guess, secret, low, high)
+    return {
+        "guess": guess,
+        "outcome": outcome,
+        "distance": abs(guess - secret),
+        "closeness": get_closeness(guess, secret, low, high),
+        "temperature": label,
+        "emoji": emoji,
+        "color": color,
+        "score": score,
+    }
+
+
+def summarize_rounds(rounds: list[dict]) -> list[dict]:
+    """Turn round records into rows for the end-of-game summary table.
+
+    Args:
+        rounds: Records from :func:`build_round_record`, in guess order.
+
+    Returns:
+        One dict per guess with human-readable column names.
+    """
+    return [
+        {
+            "Guess #": number,
+            "Guess": r["guess"],
+            "Result": r["outcome"],
+            "Off by": r["distance"],
+            "Hot/Cold": f"{r['emoji']} {r['temperature']}",
+            "Score": r["score"],
+        }
+        for number, r in enumerate(rounds, start=1)
+    ]

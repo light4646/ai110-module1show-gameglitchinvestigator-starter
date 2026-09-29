@@ -1,10 +1,14 @@
 import pytest
 
 from logic_utils import (
+    build_round_record,
     check_guess,
+    get_closeness,
+    get_temperature,
     get_attempt_limit,
     get_range_for_difficulty,
     parse_guess,
+    summarize_rounds,
     update_score,
 )
 
@@ -140,3 +144,49 @@ def test_range_bounds_are_inclusive():
 
 def test_no_range_check_when_bounds_not_given():
     assert parse_guess("-5") == (True, -5, None)
+
+
+# --- Challenge 2/4: Hot/Cold, closeness and summary --------------------------
+
+def test_closeness_is_one_for_exact_guess_and_zero_at_far_end():
+    assert get_closeness(50, 50, 1, 100) == 1.0
+    assert get_closeness(100, 1, 1, 100) == 0.0
+
+
+def test_closeness_is_symmetric():
+    assert get_closeness(40, 50, 1, 100) == get_closeness(60, 50, 1, 100)
+
+
+@pytest.mark.parametrize("guess, label", [
+    (52, "Hot"),     # 2 away out of 99  -> 2%
+    (60, "Warm"),    # 10 away           -> 10%
+    (75, "Cool"),    # 25 away           -> 25%
+    (99, "Cold"),    # 49 away           -> 49%
+    (50, "Correct"),
+])
+def test_temperature_bands_on_normal(guess, label):
+    assert get_temperature(guess, 50, 1, 100)[0] == label
+
+
+def test_temperature_scales_with_range():
+    # 8 away is "Cold" on Easy (1-20, 42% off) but "Hot" on Hard (4% off)
+    assert get_temperature(18, 10, 1, 20)[0] == "Cold"
+    assert get_temperature(108, 100, 1, 200)[0] == "Hot"
+
+
+def test_temperature_uses_distinct_colors():
+    colors = {get_temperature(g, 50, 1, 100)[2] for g in (52, 60, 75, 99)}
+    assert len(colors) == 4
+
+
+def test_round_record_and_summary_rows():
+    rounds = [
+        build_round_record(80, 55, "Too High", -5, 1, 100),
+        build_round_record(55, 55, "Win", 85, 1, 100),
+    ]
+    rows = summarize_rounds(rounds)
+    assert rows[0] == {
+        "Guess #": 1, "Guess": 80, "Result": "Too High", "Off by": 25,
+        "Hot/Cold": "🌬️ Cool", "Score": -5,
+    }
+    assert rows[1]["Result"] == "Win" and rows[1]["Off by"] == 0

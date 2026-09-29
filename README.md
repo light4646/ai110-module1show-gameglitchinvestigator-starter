@@ -16,6 +16,8 @@ It wrote the code, ran away, and now the game is unplayable.
 3. Run the tests: `pytest`
 4. *(Optional)* Replay the bug scenarios headlessly: `python scripts/reproduce_bugs.py`
 
+> If you edit `logic_utils.py` while the app is running, restart `streamlit run`. Streamlit re-runs `app.py` on save but keeps already-imported modules in memory.
+
 ## 🕵️‍♂️ Your Mission
 
 1. **Play the game.** Open the "Developer Debug Info" tab in the app to see the secret number. Try to win.
@@ -70,13 +72,14 @@ A real game played in the browser after the fixes (Normal, Developer Debug Info 
 4. User enters **55** → "🎉 Correct!", balloons, and "You won! The secret was 55. Final score: 70" (−5 −5 + 80 for a win on the 3rd guess).
 5. User clicks **New Game 🔁** → "New game started." A new secret is picked (72). Attempts left is back to 8, score 0, history [], and the game is playable again. Before the fix it stayed stuck on "You already won".
 6. In the new game, entering **abc** shows "That is not a number." and entering **49.9** shows "Please enter a whole number (no decimals)." Attempts left stays at 8 both times.
-7. Switching the sidebar to **Easy** starts a fresh game with "Guess a number between 1 and 20. Attempts left: 6" (checked headlessly, scenario E in `bug_trace_after.txt`).
+7. **With the UI features:** in a later game (secret 60), guessing **95** and then **63** filled the sidebar's 📜 Guess History with "#1: 95 🧊 Cold, 65% close" and "#2: 63 🔥 Hot, 97% close". Guessing **60** won and showed the 📊 Game Summary table (in the Stretch Features section below). After **New Game**, the sidebar said "No guesses yet.", and a guess of **1** showed "📈 Go HIGHER!" followed by a violet **🧊 Cold!**.
+8. Switching the sidebar to **Easy** starts a fresh game with "Guess a number between 1 and 20. Attempts left: 6" (checked headlessly, scenario E in `bug_trace_after.txt`).
 
 The same scenarios, run headlessly before and after the fixes, are in [`bug_trace_before.txt`](bug_trace_before.txt) and [`bug_trace_after.txt`](bug_trace_after.txt).
 
 ## 🧪 Test Results
 
-48 tests: unit tests for `logic_utils.py` in `tests/test_game_logic.py`, and headless end-to-end tests of `app.py` using Streamlit's `AppTest` in `tests/test_app_flow.py`. Every app-flow test was also run against the original `app.py`, and all 9 failed there, so they really catch the bugs. Full verbose output is in [`test_results.txt`](test_results.txt).
+63 tests: unit tests for `logic_utils.py` in `tests/test_game_logic.py`, and headless end-to-end tests of `app.py` using Streamlit's `AppTest` in `tests/test_app_flow.py`. The 9 app-flow tests for the original bugs were also run against the original `app.py`, and all 9 failed there, so they really catch the bugs. Full verbose output is in [`test_results.txt`](test_results.txt).
 
 ```
 $ pytest
@@ -86,16 +89,40 @@ rootdir: ai110-module1show-gameglitchinvestigator-starter
 configfile: pytest.ini
 testpaths: tests
 plugins: anyio-4.15.1
-collected 48 items
+collected 63 items
 
-tests/test_app_flow.py .........                                         [ 18%]
-tests/test_game_logic.py .......................................         [100%]
+tests/test_app_flow.py ..............                                    [ 22%]
+tests/test_game_logic.py ............................................... [ 96%]
+..                                                                       [100%]
 
-============================== 48 passed in 0.81s ==============================
+============================== 63 passed in 1.08s ==============================
 ```
 
 ## 🚀 Stretch Features
 
-- [x] **Challenge 1: Advanced Edge-Case Testing.** `parse_guess` is tested against empty and whitespace-only input, non-numeric strings (`"abc"`, `"4O"` with a letter O, `"fifty"`), decimals (`"49.9"`, `"3.0"`, `"-0.5"`), negatives and zero, above-range values and a 20-digit number, plus inclusive bounds. The prompts and the reason for each edge case are in [`ai_interactions.md`](ai_interactions.md).
-- [x] **Challenge 3: Professional Documentation and Linting.** Every function in `logic_utils.py` has a Google-style docstring. `pycodestyle` (PEP 8) and `pydocstyle` report no issues. Before/after linter output is in [`lint_report.txt`](lint_report.txt), and the changes are described in [`ai_interactions.md`](ai_interactions.md).
-- [ ] [If you choose to complete Challenge 4, describe the Enhanced UI changes here — a screenshot is optional]
+All five challenges are done.
+
+- [x] **Challenge 1: Advanced Edge-Case Testing.** `parse_guess` is tested against empty and whitespace-only input, non-numeric strings (`"abc"`, `"4O"` with a letter O, `"fifty"`), decimals (`"49.9"`, `"3.0"`, `"-0.5"`), negatives and zero, above-range values and a 20-digit number, plus inclusive bounds. All pass (output above). The prompts and the reason for each edge case are in [`ai_interactions.md`](ai_interactions.md#test-generation-sf7).
+- [x] **Challenge 2: Feature Expansion (Guess History sidebar).** The sidebar lists every guess in the current game with its Hot/Cold label and a "% close" progress bar showing how near it was to the secret. It clears on New Game, and only shows guess numbers when "Show hint" is off, so it can't leak the answer. The agent workflow (files modified, what was asked, what the agent did, manual corrections) is in [`ai_interactions.md`](ai_interactions.md#agent-workflow-sf8).
+- [x] **Challenge 3: Professional Documentation and Linting.** Every function in `logic_utils.py` has a Google-style docstring. `pycodestyle` (PEP 8) and `pydocstyle` report no issues. Before/after linter output is in [`lint_report.txt`](lint_report.txt), and the changes are described in [`ai_interactions.md`](ai_interactions.md#linting--style-sf9).
+- [x] **Challenge 4: Enhanced Game UI.** See below.
+- [x] **Challenge 5: AI Model Comparison.** The same bug was given to Claude Sonnet 5.5 and Claude Haiku 4.5. Both fixes were run on the same inputs, and the comparison (which was more Pythonic, which explained it better) is in [`ai_interactions.md`](ai_interactions.md#model-comparison-sf11). Raw answers are in [`model_comparison/`](model_comparison/).
+
+### 🎨 Enhanced UI (Challenge 4)
+
+The UI changes sit on top of the core logic. The direction hint (`st.warning` with "Go HIGHER/LOWER") is unchanged, and all the original tests still pass.
+
+| Enhancement | What the player sees | Code |
+|---|---|---|
+| **Hot/Cold hints with emojis** | After each wrong guess, a line like **🔥 Hot!**, **♨️ Warm!**, **🌬️ Cool!** or **🧊 Cold!**, based on the distance as a share of the range. Being 3 away means the same "heat" on Easy (1–20) and Hard (1–200) | `get_temperature()` and `TEMPERATURE_BANDS` in `logic_utils.py`; `show_hot_cold()` in `app.py` |
+| **Color-coded hints** | Each temperature has its own color: Hot is red, Warm orange, Cool blue, Cold violet (Streamlit `:color[...]` markdown). The same colors are used in the sidebar | The `color` field in `TEMPERATURE_BANDS`; `show_hot_cold()` and `show_guess_history()` in `app.py` |
+| **Closeness bars** | Each guess in the Guess History sidebar has a progress bar, like "97% close" | `get_closeness()` in `logic_utils.py`; `show_guess_history()` in `app.py` |
+| **Session summary table** | When the game ends (win or loss), a **📊 Game Summary** table lists Guess #, Guess, Result, Off by, Hot/Cold and running Score | `build_round_record()` and `summarize_rounds()` in `logic_utils.py`; `show_summary()` in `app.py` |
+
+Example summary from a real game (secret 60):
+
+| Guess # | Guess | Result | Off by | Hot/Cold | Score |
+|---|---|---|---|---|---|
+| 1 | 95 | Too High | 35 | 🧊 Cold | -5 |
+| 2 | 63 | Too High | 3 | 🔥 Hot | -10 |
+| 3 | 60 | Win | 0 | 🎯 Correct | 70 |

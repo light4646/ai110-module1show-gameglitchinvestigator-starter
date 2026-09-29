@@ -32,7 +32,7 @@ scripts/reproduce_bugs.py:102:80: E501 line too long (113 > 79 characters)
 $ pydocstyle --convention=google logic_utils.py
 (no issues)
 
-===== AFTER style fixes =====
+===== AFTER style fixes (re-run after the Challenge 2/4 features were added) =====
 $ pycodestyle app.py logic_utils.py tests/ scripts/
 (no issues)
 $ pydocstyle --convention=google logic_utils.py

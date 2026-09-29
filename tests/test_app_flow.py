@@ -99,3 +99,53 @@ def test_invalid_input_does_not_use_an_attempt():
     assert at.error[0].value == "That is not a number."
     assert at.session_state["attempts"] == 0
     assert info_text(at).endswith("Attempts left: 8")
+
+
+# --- Challenge 2: Guess History sidebar ---------------------------------
+
+def sidebar_text(at):
+    return " ".join(m.value for m in at.sidebar.markdown)
+
+
+def test_guess_history_sidebar_lists_each_guess_with_temperature():
+    at = start(secret=50)
+    guess(at, 52)
+    guess(at, 99)
+    text = sidebar_text(at)
+    assert "#1: 52" in text and "Hot" in text
+    assert "#2: 99" in text and "Cold" in text
+    assert len(at.sidebar.get("progress")) == 2
+
+
+def test_guess_history_hides_closeness_when_hints_are_off():
+    at = start(secret=50)
+    at.checkbox[0].uncheck()
+    guess(at, 52)
+    assert "#1: 52" in sidebar_text(at)
+    assert "Hot" not in sidebar_text(at)
+    assert len(at.sidebar.get("progress")) == 0
+
+
+def test_guess_history_clears_on_new_game():
+    at = guess(start(secret=50), 10)
+    click(at, "New Game")
+    assert "No guesses yet." in [c.value for c in at.sidebar.caption]
+
+
+# --- Challenge 4: Hot/Cold hint and summary table ----------------------
+
+def test_hot_cold_line_is_color_coded():
+    at = guess(start(secret=50), 52)
+    assert any(":red[🔥 Hot!]" in m.value for m in at.markdown)
+    at = guess(start(secret=50), 99)
+    assert any(":violet[🧊 Cold!]" in m.value for m in at.markdown)
+
+
+def test_summary_table_appears_only_when_game_ends():
+    at = guess(start(secret=50), 40)
+    assert len(at.table) == 0
+    guess(at, 50)
+    assert len(at.table) == 1
+    rows = at.table[0].value
+    assert list(rows["Guess"]) == [40, 50]
+    assert list(rows["Result"]) == ["Too Low", "Win"]
